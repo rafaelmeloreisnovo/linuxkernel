@@ -1,20 +1,21 @@
 # lowlevel_pureasm
 
-Escopo: núcleo/engine/módulos em assembly puro, sem dependências externas, sem objetos, sem GC, sem abstrações de alto nível.
+Refatoração para execução em assembly puro, sem dependências externas, sem objetos, sem GC e sem camada de abstração de runtime.
 
-## Diretrizes aplicadas
-- Fluxo plano por blocos de execução (labels), sem camada de abstração.
-- Uso explícito de registradores e endereços mapeados.
-- Acesso direto a pino por registrador de I/O mapeado em memória.
-- Sem variáveis semânticas de alto nível.
+## Estrutura de fluxo
+- Fluxo plano por blocos: `ll0` -> `ll1` -> `ll2` -> `ll3` -> `ll4` -> `ll5`.
+- Sem função de alto nível; apenas labels e saltos diretos.
 
-## Mapa mínimo de hardware (exemplo)
-- Base MMIO: `0x40000000`
-- Offset direção GPIO: `0x0004`
-- Offset saída GPIO: `0x0008`
-- Pino alvo: bit `3`
+## Contrato low-level
+- Registradores explícitos: `%eax`, `%ebx`, `%ecx`, `%edx`, `%esi`.
+- Endereços explícitos por constantes: `C0`, `C1`, `C2`, `C3`.
+- Escrita/leitura direta em MMIO para direção e saída GPIO.
 
-## Arquivo principal
-- `core_engine_modules.S`: blocos `ll_entry`, `ll_core`, `ll_engine`, `ll_mod0`, `ll_mod1`, `ll_halt`.
+## Mapeamento usado
+- `C0 = 0x40000000` (base MMIO)
+- `C1 = 0x0004` (offset direção)
+- `C2 = 0x0008` (offset saída)
+- `C3 = 3` (bit do pino)
 
-Observação: este diretório não altera pipelines existentes; é um núcleo isolado para evolução low-level incremental.
+## Build local isolado
+- `Makefile` local adicionado para montar objeto com `$(CC)` sem alterar pipeline global.

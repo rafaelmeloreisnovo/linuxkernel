@@ -1,54 +1,47 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/* low-level puro: núcleo + engine + módulos em fluxo plano */
+/* low-level puro, fluxo plano por blocos, sem runtime */
 
     .section .text
-    .global ll_entry
+    .global ll0
 
-/* mapa explícito: registradores/endereços/pino */
-    .equ R0_MMIO_BASE, 0x40000000
-    .equ R1_GPIO_DIR,  0x0004
-    .equ R2_GPIO_OUT,  0x0008
-    .equ R3_PIN_BIT,   3
+    .equ C0, 0x40000000
+    .equ C1, 0x0004
+    .equ C2, 0x0008
+    .equ C3, 3
 
-/* bloco de entrada */
-ll_entry:
-    jmp ll_core
+ll0:
+    jmp ll1
 
-/* bloco núcleo */
-ll_core:
-    movl $R0_MMIO_BASE, %eax
-    movl $R1_GPIO_DIR, %ebx
+ll1:
+    movl $C0, %eax
+    movl $C1, %ebx
     addl %eax, %ebx
     movl (%ebx), %ecx
-    btsl $R3_PIN_BIT, %ecx
+    btsl $C3, %ecx
     movl %ecx, (%ebx)
-    jmp ll_engine
+    jmp ll2
 
-/* bloco engine */
-ll_engine:
-    movl $R0_MMIO_BASE, %eax
-    movl $R2_GPIO_OUT, %ebx
+ll2:
+    movl $C0, %eax
+    movl $C2, %ebx
     addl %eax, %ebx
     movl (%ebx), %ecx
-    btsl $R3_PIN_BIT, %ecx
+    btsl $C3, %ecx
     movl %ecx, (%ebx)
-    jmp ll_mod0
+    jmp ll3
 
-/* bloco módulo 0 */
-ll_mod0:
+ll3:
     movl (%ebx), %edx
-    btcl $R3_PIN_BIT, %edx
+    btcl $C3, %edx
     movl %edx, (%ebx)
-    jmp ll_mod1
+    jmp ll4
 
-/* bloco módulo 1 */
-ll_mod1:
+ll4:
     movl (%ebx), %esi
-    btrl $R3_PIN_BIT, %esi
+    btrl $C3, %esi
     movl %esi, (%ebx)
-    jmp ll_halt
+    jmp ll5
 
-/* bloco de parada sem runtime */
-ll_halt:
+ll5:
     hlt
-    jmp ll_halt
+    jmp ll5
