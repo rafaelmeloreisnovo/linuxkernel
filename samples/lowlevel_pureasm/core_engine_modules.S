@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /* low-level puro, fluxo plano por blocos, sem runtime */
 
+#include "generated/detected.inc"
+
     .section .text
     .global ll0
 
@@ -40,6 +42,12 @@ ll4:
     movl (%ebx), %esi
     btrl $C3, %esi
     movl %esi, (%ebx)
+
+    /* autoidentificação fixa em registradores antes do halt */
+    movl $D0, %edi
+    movl $D1, %ebp
+    movl $D2, %eax
+
     jmp ll5
 
 ll5:
