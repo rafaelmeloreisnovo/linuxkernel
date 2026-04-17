@@ -50,3 +50,13 @@ Hardware (D2):
 - ``10`` = virtual
 - ``11`` = generic-dmi
 - ``0`` = desconhecido
+
+Roadmap
+-------
+
+- Ver ``Documentation/lowlevel/ROADMAP.md`` para planejamento incremental.
+
+Área para IA (contexto estruturado)
+-----------------------------------
+
+- Ver ``Documentation/lowlevel/AI_CONTEXT.yaml`` com contrato, escopo e comandos de verificação.

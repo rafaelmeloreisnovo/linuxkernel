@@ -30,3 +30,7 @@ Refatoração para execução em assembly puro, sem dependências externas, sem 
 ## Build local isolado
 - `make -C samples/lowlevel_pureasm generated/detected.inc`
 - `gcc -c -x assembler-with-cpp samples/lowlevel_pureasm/core_engine_modules.S -o /tmp/core_engine_modules.o`
+
+## Roadmap e área para IA
+- Roadmap: `Documentation/lowlevel/ROADMAP.md`
+- Contexto estruturado para IA: `Documentation/lowlevel/AI_CONTEXT.yaml`
