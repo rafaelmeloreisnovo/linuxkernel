@@ -79,6 +79,15 @@ struct max30100_data {
 	__be16 buffer[2]; /* 2 16-bit channels */
 };
 
+/*
+ * Arquitetura: ponto de sincronização explícito para acessos críticos
+ * aos registradores mapeados em hexadecimal do MAX30100.
+ */
+static __always_inline void max30100_arch_barrier(void)
+{
+	asm volatile("" : : : "memory");
+}
+
 static bool max30100_is_volatile_reg(struct device *dev, unsigned int reg)
 {
 	switch (reg) {
@@ -153,6 +162,7 @@ static const struct iio_chan_spec max30100_channels[] = {
 
 static int max30100_set_powermode(struct max30100_data *data, bool state)
 {
+	max30100_arch_barrier();
 	return regmap_update_bits(data->regmap, MAX30100_REG_MODE_CONFIG,
 				  MAX30100_REG_MODE_CONFIG_PWR,
 				  state ? 0 : MAX30100_REG_MODE_CONFIG_PWR);
@@ -165,10 +175,12 @@ static int max30100_clear_fifo(struct max30100_data *data)
 	ret = regmap_write(data->regmap, MAX30100_REG_FIFO_WR_PTR, 0);
 	if (ret)
 		return ret;
+	max30100_arch_barrier();
 
 	ret = regmap_write(data->regmap, MAX30100_REG_FIFO_OVR_CTR, 0);
 	if (ret)
 		return ret;
+	max30100_arch_barrier();
 
 	return regmap_write(data->regmap, MAX30100_REG_FIFO_RD_PTR, 0);
 }
@@ -205,6 +217,7 @@ static inline int max30100_fifo_count(struct max30100_data *data)
 	ret = regmap_read(data->regmap, MAX30100_REG_INT_STATUS, &val);
 	if (ret)
 		return ret;
+	max30100_arch_barrier();
 
 	/* FIFO is almost full */
 	if (val & MAX30100_REG_INT_STATUS_FIFO_RDY)
@@ -215,14 +228,18 @@ static inline int max30100_fifo_count(struct max30100_data *data)
 
 static int max30100_read_measurement(struct max30100_data *data)
 {
+	u8 raw[MAX30100_REG_FIFO_DATA_ENTRY_LEN];
 	int ret;
 
-	ret = i2c_smbus_read_i2c_block_data(data->client,
-					    MAX30100_REG_FIFO_DATA,
-					    MAX30100_REG_FIFO_DATA_ENTRY_LEN,
-					    (u8 *) &data->buffer);
+	ret = regmap_bulk_read(data->regmap, MAX30100_REG_FIFO_DATA,
+			       raw, sizeof(raw));
+	if (ret)
+		return ret;
 
-	return (ret == MAX30100_REG_FIFO_DATA_ENTRY_LEN) ? 0 : ret;
+	data->buffer[0] = cpu_to_be16((raw[0] << 8) | raw[1]);
+	data->buffer[1] = cpu_to_be16((raw[2] << 8) | raw[3]);
+
+	return 0;
 }
 
 static irqreturn_t max30100_interrupt_handler(int irq, void *private)
